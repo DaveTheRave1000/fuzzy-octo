@@ -4,38 +4,57 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/fuzzy-octo/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite App</title>
-    <script type="module" crossorigin src="/fuzzy-octo/assets/index-DfBeIE5N.js"></script>
+    <title>GameDev Simulator</title>
+    <script type="module" crossorigin src="/fuzzy-octo/assets/index-d5jrb678.js"></script>
     <link rel="stylesheet" crossorigin href="/fuzzy-octo/assets/index-BwnXKtjv.css">
   </head>
   <body>
-    <div id="app"></div>
     <div class="container">
       <h1>GameDev Simulator</h1>
-      <div id="main-menu">
-        <label for="project-select">Choose a project:</label>
-        <select id="project-select">
-          <option value="indie">Indie Platformer</option>
-          <option value="rpg">Epic RPG</option>
-          <option value="shooter">Space Shooter</option>
-        </select>
-        <button id="start-btn">Start Project</button>
-      </div>
-      <div id="game-ui" style="display:none; width:100%">
-        <div class="stats">
-          <div>Money: <span id="money"></span></div>
-          <div>Staff: <span id="staff"></span></div>
-          <div>Hype: <span id="hype"></span></div>
-          <div>Progress: <span id="progress"></span></div>
-          <div>Milestone: <span id="milestone"></span></div>
+      <div class="main-layout">
+        <nav class="sidebar">
+          <button class="panel-btn" data-panel="project">Project</button>
+          <button class="panel-btn" data-panel="staff">Staff</button>
+          <button class="panel-btn" data-panel="marketing">Marketing</button>
+          <button class="panel-btn" data-panel="progress">Progress</button>
+          <button class="panel-btn" data-panel="log">Log</button>
+        </nav>
+        <div class="panels">
+          <section id="panel-project" class="panel active">
+            <div id="main-menu">
+              <label for="project-select">Choose a project:</label>
+              <select id="project-select">
+                <option value="indie">Indie Platformer</option>
+                <option value="rpg">Epic RPG</option>
+                <option value="shooter">Space Shooter</option>
+              </select>
+              <button id="start-btn">Start Project</button>
+            </div>
+          </section>
+          <section id="panel-staff" class="panel">
+            <div class="stats">
+              <div>Staff: <span id="staff"></span></div>
+              <button id="hire">Hire Staff ($2000)</button>
+            </div>
+          </section>
+          <section id="panel-marketing" class="panel">
+            <div class="stats">
+              <div>Hype: <span id="hype"></span></div>
+              <button id="market">Market ($1000)</button>
+            </div>
+          </section>
+          <section id="panel-progress" class="panel">
+            <div class="stats">
+              <div>Money: <span id="money"></span></div>
+              <div>Progress: <span id="progress"></span></div>
+              <div>Milestone: <span id="milestone"></span></div>
+            </div>
+            <div id="three-canvas"></div>
+          </section>
+          <section id="panel-log" class="panel">
+            <pre id="log" class="log"></pre>
+          </section>
         </div>
-        <div class="controls">
-          <button id="hire">Hire Staff ($2000)</button>
-          <button id="pause">Pause/Resume</button>
-          <button id="market">Market ($1000)</button>
-        </div>
-        <div id="three-canvas"></div>
-        <pre id="log" class="log"></pre>
       </div>
     </div>
   </body>
