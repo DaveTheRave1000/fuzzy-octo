@@ -1,11 +1,18 @@
 {
+<<<<<<< HEAD
   "name": "h4cker",
   "private": true,
   "version": "1.0.0",
+=======
+  "name": "fuzzy-octo",
+  "private": true,
+  "version": "0.0.0",
+>>>>>>> d33626e994f67969c3349e8e2ad655950c9684aa
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+<<<<<<< HEAD
     "preview": "vite preview",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist"
@@ -21,4 +28,14 @@
     "three": "^0.179.1"
   },
   "homepage": "https://DaveTheRave1000.github.io/fuzzy-octo"
+=======
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^7.1.0"
+  },
+  "dependencies": {
+    "three": "^0.179.1"
+  }
+>>>>>>> d33626e994f67969c3349e8e2ad655950c9684aa
 }
