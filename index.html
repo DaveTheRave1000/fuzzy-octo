@@ -3,8 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/fuzzy-octo/vite.svg" />
     <title>H4CKER</title>
-    <script type="module" crossorigin src="/fuzzy-octo/assets/index-8f983e41.js"></script>
+    <script type="module" crossorigin src="/fuzzy-octo/assets/index-7db27dbf.js"></script>
     <link rel="stylesheet" href="/fuzzy-octo/assets/index-855398c2.css">
   </head>
   <body>
@@ -334,21 +335,64 @@
   </head>
   <body>
     <div id="app"></div>
+    <!-- Main Game Container -->
     <div class="container">
-      <h1>GameDev Simulator</h1>
-      <div class="stats">
-        <div>Money: <span id="money"></span></div>
-        <div>Staff: <span id="staff"></span></div>
-        <div>Progress: <span id="progress"></span></div>
-        <div>Milestone: <span id="milestone"></span></div>
+      <!-- 3D Scene -->
+      <div id="three-canvas" class="scene-container"></div>
+
+      <!-- Game Panels -->
+      <div class="sidebar">
+        <div class="panel-buttons">
+          <button class="panel-btn" data-panel="project">Project</button>
+          <button class="panel-btn" data-panel="staff">Staff</button>
+          <button class="panel-btn" data-panel="marketing">Marketing</button>
+        </div>
+
+        <!-- Project Panel -->
+        <div id="panel-project" class="panel">
+          <h2>Current Project</h2>
+          <div class="stats">
+            <div>Budget: $<span id="budget">10000</span></div>
+            <div>Progress: <span id="progress">0</span>%</div>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="project-progress"></div>
+          </div>
+          <button id="new-project-btn">Start New Project</button>
+        </div>
+
+        <!-- Staff Panel -->
+        <div id="panel-staff" class="panel">
+          <h2>Development Team</h2>
+          <div class="stats">
+            <div>Total Staff: <span id="total-staff">0</span></div>
+            <div>Available: $<span id="available-funds">10000</span></div>
+          </div>
+          <div class="staff-list" id="staff-list">
+            <!-- Staff members will be added here dynamically -->
+          </div>
+          <button id="hire-staff-btn">Hire Staff ($2000)</button>
+        </div>
+
+        <!-- Marketing Panel -->
+        <div id="panel-marketing" class="panel">
+          <h2>Marketing</h2>
+          <div class="stats">
+            <div>Budget: $<span id="marketing-budget">5000</span></div>
+            <div>Hype: <span id="hype-level">0</span>%</div>
+          </div>
+          <div class="marketing-campaigns" id="marketing-campaigns">
+            <!-- Marketing campaigns will be added here dynamically -->
+          </div>
+          <button id="new-campaign-btn">Launch Campaign ($1000)</button>
+        </div>
       </div>
-      <div class="controls">
-        <button id="hire">Hire Staff ($2000)</button>
-        <button id="pause">Pause/Resume</button>
+
+      <!-- System Log -->
+      <div class="log-container">
+        <div class="log-header">System Log</div>
+        <pre id="log" class="log"></pre>
       </div>
-      <div id="three-canvas"></div>
-      <pre id="log" class="log"></pre>
->>>>>>> d33626e994f67969c3349e8e2ad655950c9684aa
     </div>
     
   </body>
