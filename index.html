@@ -3,56 +3,328 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>GameDev Simulator</title>
-    <script type="module" crossorigin src="/fuzzy-octo/assets/index-DjBFDFHB.js"></script>
-    <link rel="stylesheet" crossorigin href="/fuzzy-octo/assets/index-BwnXKtjv.css">
+    <title>H4CKER</title>
+    <script type="module" crossorigin src="/fuzzy-octo/assets/index-DVEFLc-w.js"></script>
+    <link rel="stylesheet" crossorigin href="/fuzzy-octo/assets/index-Nut8ivy9.css">
   </head>
   <body>
-    <div class="container">
-      <h1>GameDev Simulator</h1>
+    <!-- Login Modal -->
+    <div id="start-game-modal" class="modal active">
+      <div class="modal-content terminal">
+        <div class="login-header">
+          <span class="blink">>_</span> UNAUTHORIZED ACCESS DETECTED
+        </div>
+        <pre class="ascii-art">
+  _    _    _    _____  _   _  ______ _____
+ | |  | |  /_\  / ____|| | / /|  ____|  __ \
+ | |__| | //_\\ | |    | |/ / | |__  | |__) |
+ |  __  |/ ___ \| |    |   &lt;  |  __| |  _  /
+ | |  | | /_/ \_\ |____| |\ \ | |____| | \ \
+ |_|  |_/_/   \_\_____|_| \_\|______|_|  \_\
+        </pre>
+        <div class="login-prompt">
+          <p class="typewriter">Establishing secure connection...</p>
+          <p class="typewriter">Ready to infiltrate the system?</p>
+          <button id="start-game-btn" class="crt-button">> INITIATE BREACH</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div id="game-over-modal" class="modal">
+      <div class="modal-content terminal">
+        <div class="game-over-header">
+          <span class="blink">>_</span> CONNECTION TERMINATED
+        </div>
+        <p>System security traced your location!</p>
+        <p>Operation Stats:</p>
+        <div id="final-stats" class="stats-terminal"></div>
+        <button id="restart-game-btn" class="crt-button">> REINITIALIZE SYSTEM</button>
+      </div>
+    </div>
+
+    <div class="container terminal">
+      <!-- Terminal Logo -->
+      <div class="terminal-logo">
+        <pre class="ascii-art">
+  _    _    _    _____  _   _  ______ _____
+ | |  | |  /_\  / ____|| | / /|  ____|  __ \
+ | |__| | //_\\ | |    | |/ / | |__  | |__) |
+ |  __  |/ ___ \| |    |   <  |  __| |  _  /
+ | |  | | /_/ \_\ |____| |\ \ | |____| | \ \
+ |_|  |_/_/   \_\_____|_| \_\|______|_|  \_\
+        </pre>
+      </div>
+      <div class="title-bar">
+        <span class="blink">>_</span> TERMINAL: ROOT@DARKNET
+      </div>
+      <div class="header-controls">
+        <div class="global-stats">
+          <div class="stat-block">
+            <span class="stat-label">CASH:</span>
+            <span id="global-money" class="stat-value"></span>
+          </div>
+          <div class="stat-block">
+            <span class="stat-label">REP:</span>
+            <span id="global-reputation" class="stat-value">0</span>
+          </div>
+          <div class="stat-block">
+            <span class="stat-label">FANS:</span>
+            <span id="global-followers" class="stat-value">0</span>
+          </div>
+          <div class="stat-block time-block">
+            <span class="stat-label">TIME:</span>
+            <span id="global-time" class="stat-value">DAY 1</span>
+            <span id="game-speed" class="speed-indicator">1x</span>
+          </div>
+        </div>
+
+      </div>
+      
       <div class="main-layout">
         <nav class="sidebar">
           <button class="panel-btn" data-panel="project">Project</button>
           <button class="panel-btn" data-panel="staff">Staff</button>
           <button class="panel-btn" data-panel="marketing">Marketing</button>
           <button class="panel-btn" data-panel="progress">Progress</button>
-          <button class="panel-btn" data-panel="log">Log</button>
+          <div class="sidebar-spacer"></div>
+          <button id="pause-btn" class="panel-btn pause-button" title="Pause/Resume Game">
+            <span class="button-text">[PAUSE]</span>
+          </button>
         </nav>
-        <div class="panels">
-          <section id="panel-project" class="panel active">
-            <div id="main-menu">
-              <label for="project-select">Choose a project:</label>
-              <select id="project-select">
-                <option value="indie">Indie Platformer</option>
-                <option value="rpg">Epic RPG</option>
-                <option value="shooter">Space Shooter</option>
-              </select>
-              <button id="start-btn">Start Project</button>
-            </div>
-          </section>
+        
+        <div class="game-content">
+          <div class="panels-container">
+            <section id="panel-hack" class="panel active">
+              <div class="panel-content">
+                <div class="terminal-header">> SELECT TARGET</div>
+                <div class="hack-targets">
+                  <div class="target-list" id="hack-targets">
+                    <div class="target-item">
+                      <span class="target-name">Small Business Network</span>
+                      <span class="target-difficulty">Easy</span>
+                      <span class="target-reward">0.01-0.05 BTC</span>
+                      <button class="crt-button hack-btn" data-target="small_business">HACK</button>
+                    </div>
+                    <div class="target-item">
+                      <span class="target-name">Corporate Database</span>
+                      <span class="target-difficulty">Medium</span>
+                      <span class="target-reward">0.05-0.15 BTC</span>
+                      <button class="crt-button hack-btn" data-target="corporate">HACK</button>
+                    </div>
+                    <div class="target-item">
+                      <span class="target-name">Government Firewall</span>
+                      <span class="target-difficulty">Hard</span>
+                      <span class="target-reward">0.15-0.50 BTC</span>
+                      <button class="crt-button hack-btn" data-target="government">HACK</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="active-hacks">
+                  <div class="terminal-header">> ACTIVE OPERATIONS</div>
+                  <div id="active-hacks-list"></div>
+                </div>
+              </div>
+            </section>
+
+            <section id="panel-network" class="panel">
+              <div class="panel-content">
+                <div class="terminal-header">> SYSTEM STATUS</div>
+                <div id="three-canvas" class="scene-container"></div>
+                <div class="system-stats">
+                  <div class="stat-row">
+                    <span class="stat-label">CPU Usage:</span>
+                    <div class="progress-bar">
+                      <div id="cpu-bar" class="progress-fill"></div>
+                    </div>
+                  </div>
+                  <div class="stat-row">
+                    <span class="stat-label">Detection Risk:</span>
+                    <div class="progress-bar risk-bar">
+                      <div id="risk-bar" class="progress-fill"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section id="panel-software" class="panel">
+              <div class="panel-content">
+                <div class="terminal-header">> SOFTWARE UPGRADES</div>
+                <div class="software-list">
+                  <div class="software-item">
+                    <div class="software-header">
+                      <span class="name">Bruteforce.exe</span>
+                      <span id="bruteforce-level" class="level">Lvl 1</span>
+                    </div>
+                    <div class="software-stats">
+                      <div class="power">Power: <span id="bruteforce-power">1.0</span></div>
+                    </div>
+                    <button class="crt-button upgrade-btn" data-software="bruteforce">UPGRADE</button>
+                  </div>
+                  
+                  <div class="software-item">
+                    <div class="software-header">
+                      <span class="name">Encryption.exe</span>
+                      <span id="encryption-level" class="level">Lvl 1</span>
+                    </div>
+                    <div class="software-stats">
+                      <div class="power">Power: <span id="encryption-power">1.0</span></div>
+                    </div>
+                    <button class="crt-button upgrade-btn" data-software="encryption">UPGRADE</button>
+                  </div>
+                  
+                  <div class="software-item">
+                    <div class="software-header">
+                      <span class="name">Mining.exe</span>
+                      <span id="mining-level" class="level">Lvl 1</span>
+                    </div>
+                    <div class="software-stats">
+                      <div class="power">Power: <span id="mining-power">1.0</span></div>
+                    </div>
+                    <button class="crt-button upgrade-btn" data-software="mining">UPGRADE</button>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section id="panel-darknet" class="panel">
+              <div class="panel-content">
+                <div class="terminal-header">> DARKNET MARKET</div>
+                <div class="market-items">
+                  <div class="market-item">
+                    <span class="item-name">CPU Core</span>
+                    <span class="item-desc">+1 Parallel Process</span>
+                    <span class="item-cost">0.5 BTC</span>
+                    <button class="crt-button market-btn" data-item="cpu">PURCHASE</button>
+                  </div>
+                  <div class="market-item">
+                    <span class="item-name">Proxy Chain</span>
+                    <span class="item-desc">-20% Detection Risk</span>
+                    <span class="item-cost">0.3 BTC</span>
+                    <button class="crt-button market-btn" data-item="proxy">PURCHASE</button>
+                  </div>
+                </div>
+              </div>
+            </section>
+              </div>
+            </section>
           <section id="panel-staff" class="panel">
-            <div class="stats">
-              <div>Staff: <span id="staff"></span></div>
-              <button id="hire">Hire Staff ($2000)</button>
-            </div>
-          </section>
-          <section id="panel-marketing" class="panel">
-            <div class="stats">
-              <div>Hype: <span id="hype"></span></div>
-              <button id="market">Market ($1000)</button>
-            </div>
-          </section>
-          <section id="panel-progress" class="panel">
-            <div class="stats">
-              <div>Money: <span id="money"></span></div>
-              <div>Progress: <span id="progress"></span></div>
-              <div>Milestone: <span id="milestone"></span></div>
-            </div>
-            <div id="three-canvas"></div>
-          </section>
-          <section id="panel-log" class="panel">
+              <div class="panel-content">
+                <div class="team-management">
+                  <h2>Team Management</h2>
+                  <div class="team-stats">
+                    <div class="game-stat staff-stat">
+                      <span class="stat-label">Current Staff:</span>
+                      <span id="staff-count" class="stat-value">0</span>
+                    </div>
+                    <div class="game-stat staff-stat">
+                      <span class="stat-label">Monthly Cost:</span>
+                      <span id="staff-cost" class="stat-value">$0</span>
+                    </div>
+                  </div>
+                  <div class="staff-actions">
+                    <div class="game-stat">
+                      <span class="stat-label">Team Morale:</span>
+                      <span id="team-morale" class="stat-value">Good</span>
+                    </div>
+                  </div>
+                  <div class="team-actions">
+                    <button id="train-staff" class="crt-button">Train Staff ($5000)</button>
+                    <button id="team-building" class="crt-button">Team Building ($3000)</button>
+                  </div>
+                </div>
+              </div>
+            </section>
+            <section id="panel-marketing" class="panel">
+              <div class="panel-content">
+                <div class="marketing-dashboard">
+                  <h2>Marketing Dashboard</h2>
+                  <div class="marketing-stats">
+                    <div class="game-stat">
+                      <span class="stat-label">Current Hype:</span>
+                      <span id="hype-level" class="stat-value"></span>
+                    </div>
+                    <div class="game-stat">
+                      <span class="stat-label">Social Media:</span>
+                      <span id="social-reach" class="stat-value">10k</span>
+                    </div>
+                    <div class="game-stat">
+                      <span class="stat-label">Press Coverage:</span>
+                      <span id="press-coverage" class="stat-value">Medium</span>
+                    </div>
+                  </div>
+                  <div class="marketing-actions">
+                    <button id="social-campaign" class="crt-button">Social Media Campaign ($2000)</button>
+                    <button id="press-release" class="crt-button">Press Release ($4000)</button>
+                  </div>
+                </div>
+              </div>
+            </section>
+            <section id="panel-progress" class="panel">
+              <div class="panel-content">
+                <div class="progress-dashboard">
+                  <h2>Development Progress</h2>
+                  <div id="progress-stats" class="stats">
+                    <div class="phase-info game-stat">
+                      <span class="stat-label">Current Phase:</span>
+                      <span id="dev-phase" class="stat-value">Planning</span>
+                      <div class="phase-progress-bar">
+                        <div id="phase-progress" class="progress-fill"></div>
+                      </div>
+                    </div>
+                    <div class="game-stat">
+                      <span class="stat-label">Time Elapsed:</span>
+                      <span id="dev-time" class="stat-value">0 days</span>
+                    </div>
+                    <div class="game-stat">
+                      <span class="stat-label">Bugs Found:</span>
+                      <span id="bug-count" class="stat-value">0</span>
+                    </div>
+                  </div>
+                  
+                  <div class="phase-tasks">
+                    <h3 class="task-header">Current Tasks</h3>
+                    <div id="task-list" class="task-grid">
+                      <!-- Tasks will be added dynamically -->
+                    </div>
+                  </div>
+
+                  <div class="project-metrics">
+                    <h3 class="metrics-header">Project Metrics</h3>
+                    <div class="metrics-grid">
+                      <div class="metric">
+                        <div class="metric-label">Code Quality</div>
+                        <div id="code-quality" class="metric-bar">
+                          <div class="metric-fill"></div>
+                        </div>
+                      </div>
+                      <div class="metric">
+                        <div class="metric-label">Team Efficiency</div>
+                        <div id="team-efficiency" class="metric-bar">
+                          <div class="metric-fill"></div>
+                        </div>
+                      </div>
+                      <div class="metric">
+                        <div class="metric-label">Bug Ratio</div>
+                        <div id="bug-ratio" class="metric-bar">
+                          <div class="metric-fill"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+          
+          <!-- Persistent log section -->
+          <div class="log-container">
+            <div class="log-header">System Log</div>
             <pre id="log" class="log"></pre>
-          </section>
+          </div>
+        </div>
+      </div>
         </div>
       </div>
     </div>
