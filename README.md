@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 # H4CKER - Browser-based Hacking Simulator
 
 A retro-styled terminal-based hacking simulator game built with JavaScript and Three.js. Experience the thrill of cyber operations in a nostalgic command-line interface.
@@ -91,7 +91,6 @@ A retro-styled terminal-based hacking simulator game built with JavaScript and T
 - Progress tracking and milestones
 - 3D/advanced graphics with three.js
 - Modern, visually appealing UI
->>>>>>> d33626e994f67969c3349e8e2ad655950c9684aa
 
 ## Getting Started
 
