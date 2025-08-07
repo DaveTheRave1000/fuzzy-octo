@@ -1,0 +1,21 @@
+# Code Citations
+
+## Package.json Configuration
+Referenced from:
+- https://github.com/WeiYun0912/Wei-Docusaurus/blob/63f35f9bff3223bd5a77b29fdf662487d9e4b8e8/docs/Vite/Vite-Github-Pages.md
+- https://github.com/teocci/vite-dashboard/blob/597debfefc1f5c16b11ed070b2e809391cfc1305/README.md
+
+```json
+{
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"
+  }
+}
+```

@@ -2,7 +2,16 @@ import * as THREE from 'three';
 
 export class Scene {
   constructor(containerId) {
-    this.container = document.getElementById(containerId);
+    this.containerId = containerId;
+  }
+
+  init() {
+    this.container = document.getElementById(this.containerId);
+    if (!this.container) {
+      console.error(`Container element with id '${this.containerId}' not found`);
+      return;
+    }
+    
     this.scene = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
     this.renderer = new THREE.WebGLRenderer({ antialias: false }); // Retro look: disable antialiasing
