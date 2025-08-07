@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/fuzzy-octo/vite.svg" />
     <title>H4CKER</title>
-    <script type="module" crossorigin src="/fuzzy-octo/assets/index-7db27dbf.js"></script>
+    <script type="module" crossorigin src="/fuzzy-octo/assets/index-b86f5ad2.js"></script>
     <link rel="stylesheet" href="/fuzzy-octo/assets/index-855398c2.css">
   </head>
   <body>
@@ -337,28 +337,59 @@
     <div id="app"></div>
     <!-- Main Game Container -->
     <div class="container">
+      <!-- Game Stats Header -->
+      <div class="stats">
+        <div>BTC: <span id="btc">0.1</span></div>
+        <div>Reputation: <span id="reputation">0</span></div>
+        <div>Uptime: <span id="uptime">0m 0s</span></div>
+        <div>CPU: <span id="cpu-usage">0</span>%</div>
+      </div>
+
       <!-- 3D Scene -->
       <div id="three-canvas" class="scene-container"></div>
 
       <!-- Game Panels -->
       <div class="sidebar">
         <div class="panel-buttons">
-          <button class="panel-btn" data-panel="project">Project</button>
+          <button class="panel-btn" data-panel="hack">Hack</button>
+          <button class="panel-btn" data-panel="network">Network</button>
+          <button class="panel-btn" data-panel="software">Software</button>
+          <button class="panel-btn" data-panel="darknet">Darknet</button>
           <button class="panel-btn" data-panel="staff">Staff</button>
           <button class="panel-btn" data-panel="marketing">Marketing</button>
+          <button class="panel-btn" data-panel="progress">Progress</button>
         </div>
 
-        <!-- Project Panel -->
-        <div id="panel-project" class="panel">
-          <h2>Current Project</h2>
-          <div class="stats">
-            <div>Budget: $<span id="budget">10000</span></div>
-            <div>Progress: <span id="progress">0</span>%</div>
+        <!-- Hack Panel -->
+        <div id="panel-hack" class="panel active">
+          <h2>Available Targets</h2>
+          <div id="hack-targets"></div>
+          <h3>Active Hacks</h3>
+          <div id="active-hacks-list"></div>
+        </div>
+
+        <!-- Network Panel -->
+        <div id="panel-network" class="panel">
+          <h2>Network Status</h2>
+          <div id="network-status"></div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="cpu-bar"></div>
           </div>
           <div class="progress-bar">
-            <div class="progress-fill" id="project-progress"></div>
+            <div class="progress-fill" id="risk-bar"></div>
           </div>
-          <button id="new-project-btn">Start New Project</button>
+        </div>
+
+        <!-- Software Panel -->
+        <div id="panel-software" class="panel">
+          <h2>Software Upgrades</h2>
+          <div id="upgrades-list"></div>
+        </div>
+
+        <!-- Darknet Panel -->
+        <div id="panel-darknet" class="panel">
+          <h2>Darknet Market</h2>
+          <div>Coming Soon...</div>
         </div>
 
         <!-- Staff Panel -->
@@ -385,6 +416,26 @@
             <!-- Marketing campaigns will be added here dynamically -->
           </div>
           <button id="new-campaign-btn">Launch Campaign ($1000)</button>
+        </div>
+
+        <!-- Progress Panel -->
+        <div id="panel-progress" class="panel">
+          <h2>Current Project</h2>
+          <div class="stats">
+            <div>Budget: $<span id="budget">10000</span></div>
+            <div>Progress: <span id="progress">0</span>%</div>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="project-progress"></div>
+          </div>
+          <button id="new-project-btn">Start New Project</button>
+        </div>
+
+        <!-- Control Buttons -->
+        <div class="controls">
+          <button id="pause-btn">Pause/Resume</button>
+          <button id="start-game-btn">Start Game</button>
+          <button id="restart-game-btn">Restart</button>
         </div>
       </div>
 
