@@ -8,10 +8,10 @@
     <link rel="icon" type="image/png" href="/fuzzy-octo/assets/favicon-701690e4.png" />
     <link rel="icon" type="image/x-icon" href="/fuzzy-octo/assets/favicon-d69341b6.ico" />
     <link rel="apple-touch-icon" href="/fuzzy-octo/assets/apple-touch-icon-4afce317.png" />
-    <link rel="manifest" href="data:application/manifest+json;base64,ewogICJuYW1lIjogIkhhY2tlciBTaW11bGF0b3IiLAogICJzaG9ydF9uYW1lIjogIkhhY2tlciBTaW11bGF0b3IiLAogICJpY29ucyI6IFsKICAgIHsKICAgICAgInNyYyI6ICIvd2ViLWFwcC1tYW5pZmVzdC0xOTJ4MTkyLnBuZyIsCiAgICAgICJzaXplcyI6ICIxOTJ4MTkyIiwKICAgICAgInR5cGUiOiAiaW1hZ2UvcG5nIiwKICAgICAgInB1cnBvc2UiOiAibWFza2FibGUiCiAgICB9LAogICAgewogICAgICAic3JjIjogIi93ZWItYXBwLW1hbmlmZXN0LTUxMng1MTIucG5nIiwKICAgICAgInNpemVzIjogIjUxMng1MTIiLAogICAgICAidHlwZSI6ICJpbWFnZS9wbmciLAogICAgICAicHVycG9zZSI6ICJtYXNrYWJsZSIKICAgIH0KICBdLAogICJ0aGVtZV9jb2xvciI6ICIjMDAwMDAwIiwKICAiYmFja2dyb3VuZF9jb2xvciI6ICIjMDAwMDAwIiwKICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIgp9" />
+    <link rel="manifest" href="data:application/manifest+json;base64,ew0KICAibmFtZSI6ICJIYWNrZXIgU2ltdWxhdG9yIiwNCiAgInNob3J0X25hbWUiOiAiSGFja2VyIFNpbXVsYXRvciIsDQogICJpY29ucyI6IFsNCiAgICB7DQogICAgICAic3JjIjogIi93ZWItYXBwLW1hbmlmZXN0LTE5MngxOTIucG5nIiwNCiAgICAgICJzaXplcyI6ICIxOTJ4MTkyIiwNCiAgICAgICJ0eXBlIjogImltYWdlL3BuZyIsDQogICAgICAicHVycG9zZSI6ICJtYXNrYWJsZSINCiAgICB9LA0KICAgIHsNCiAgICAgICJzcmMiOiAiL3dlYi1hcHAtbWFuaWZlc3QtNTEyeDUxMi5wbmciLA0KICAgICAgInNpemVzIjogIjUxMng1MTIiLA0KICAgICAgInR5cGUiOiAiaW1hZ2UvcG5nIiwNCiAgICAgICJwdXJwb3NlIjogIm1hc2thYmxlIg0KICAgIH0NCiAgXSwNCiAgInRoZW1lX2NvbG9yIjogIiMwMDAwMDAiLA0KICAiYmFja2dyb3VuZF9jb2xvciI6ICIjMDAwMDAwIiwNCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSINCn0=" />
     <title>H4CKER</title>
-    <script type="module" crossorigin src="/fuzzy-octo/assets/index-4983ee60.js"></script>
-    <link rel="stylesheet" href="/fuzzy-octo/assets/index-9dd12858.css">
+    <script type="module" crossorigin src="/fuzzy-octo/assets/index-f583c8e0.js"></script>
+    <link rel="stylesheet" href="/fuzzy-octo/assets/index-73ce82bb.css">
   </head>
   <body>
     <!-- Login Modal -->
@@ -128,6 +128,7 @@
                     <span class="stat-label">CPU Usage:</span>
                     <div class="progress-bar"><div id="cpu-bar" class="progress-fill"></div></div>
                   </div>
+                  <div class="stat-row small" id="cpu-slot-row"><span class="stat-label">CPU Slots:</span> <span id="cpu-slots-display">0/1</span></div>
                   <div class="stat-row">
                     <span class="stat-label">Detection Risk:</span>
                     <div class="progress-bar risk-bar"><div id="risk-bar" class="progress-fill"></div></div>
@@ -196,6 +197,7 @@
         <div class="log-header">System Log</div>
         <pre id="log" class="log"></pre>
       </div>
+      <div id="trace-overlay" class="trace-overlay" style="display:none;"></div>
     </div><!-- end container -->
     
     <!-- Hidden elements needed by the UI class -->
