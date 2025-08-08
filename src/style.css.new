@@ -1,0 +1,235 @@
+@keyframes flicker {
+  0% { opacity: 0.97; }
+  5% { opacity: 0.95; }
+  10% { opacity: 0.9; }
+  15% { opacity: 0.85; }
+  20% { opacity: 0.95; }
+  25% { opacity: 0.94; }
+  30% { opacity: 0.98; }
+  35% { opacity: 0.93; }
+  40% { opacity: 0.96; }
+  45% { opacity: 0.97; }
+  50% { opacity: 0.94; }
+  55% { opacity: 0.96; }
+  60% { opacity: 0.95; }
+  65% { opacity: 0.98; }
+  70% { opacity: 0.93; }
+  75% { opacity: 0.99; }
+  80% { opacity: 0.96; }
+  85% { opacity: 0.97; }
+  90% { opacity: 0.94; }
+  95% { opacity: 0.95; }
+  100% { opacity: 0.98; }
+}
+
+@keyframes slideDown {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(0); }
+}
+
+.scene-container {
+  width: 100%;
+  height: 200px;
+  background-color: #000;
+  margin-bottom: 1rem;
+  border: 1px solid var(--terminal-green);
+  position: relative;
+}
+
+:root {
+  font-family: 'Courier New', Courier, monospace;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+
+  --terminal-green: #00ff00;
+  --terminal-bg: #000000;
+  --panel-width: 300px;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--terminal-bg);
+  color: var(--terminal-green);
+}
+
+#app {
+  width: 100%;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.9);
+}
+
+.modal.active {
+  display: block;
+  animation: fadeIn 0.5s ease-out;
+}
+
+.modal-content {
+  background-color: var(--terminal-bg);
+  margin: 15% auto;
+  padding: 20px;
+  border: 1px solid var(--terminal-green);
+  width: 80%;
+  max-width: 600px;
+  position: relative;
+  animation: slideDown 0.5s ease-out;
+}
+
+.login-header {
+  font-size: 1.5em;
+  margin-bottom: 1em;
+  text-align: left;
+}
+
+.ascii-art {
+  font-family: monospace;
+  white-space: pre;
+  margin: 1em 0;
+  text-align: left;
+}
+
+.blink {
+  animation: flicker 2s infinite;
+}
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: var(--panel-width);
+  height: 100%;
+  background-color: var(--terminal-bg);
+  border-left: 1px solid var(--terminal-green);
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.panel {
+  display: none;
+  padding: 1rem;
+}
+
+.panel.active {
+  display: block;
+}
+
+.panel-buttons {
+  display: flex;
+  justify-content: space-around;
+  padding: 1rem;
+  border-bottom: 1px solid var(--terminal-green);
+}
+
+.panel-btn {
+  background: none;
+  border: 1px solid var(--terminal-green);
+  color: var(--terminal-green);
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.panel-btn:hover {
+  background-color: var(--terminal-green);
+  color: var(--terminal-bg);
+}
+
+.stats {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  border: 1px solid var(--terminal-green);
+}
+
+.progress-bar {
+  width: 100%;
+  height: 20px;
+  background-color: var(--terminal-bg);
+  border: 1px solid var(--terminal-green);
+  margin: 0.5rem 0;
+  position: relative;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: var(--terminal-green);
+  width: 0%;
+  transition: width 0.3s ease;
+}
+
+.staff-list {
+  text-align: left;
+  margin: 1rem 0;
+}
+
+.staff-member {
+  padding: 0.5rem;
+  border: 1px solid var(--terminal-green);
+  margin-bottom: 0.5rem;
+}
+
+.marketing-campaigns {
+  text-align: left;
+  margin: 1rem 0;
+}
+
+.campaign {
+  padding: 0.5rem;
+  border: 1px solid var(--terminal-green);
+  margin-bottom: 0.5rem;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+
+button:hover {
+  border-color: #646cff;
+}
+
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+  button {
+    background-color: #f9f9f9;
+  }
+}

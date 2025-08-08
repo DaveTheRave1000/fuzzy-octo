@@ -7,13 +7,29 @@ export class Game {
       uptimeFormatted: `${Math.floor(this.uptime / 60)}m ${Math.floor(this.uptime % 60)}s`,
       cpuUsage: this.cpuUsage || 0,
       riskLevel: this.detectionRisk || 0,
-      activeHacks: this.activeHacks || [],
-      availableTargets: this.availableTargets || [],
-      availableUpgrades: [], // Add upgrade logic if needed
+      activeHacks: this.activeHacks.map(h => ({
+        id: h.id,
+        name: h.name,
+        stageIndex: h.stageIndex,
+        stages: h.stages,
+        completed: h.completed,
+        failed: h.failed,
+        stageElapsed: h.stageElapsed,
+        currentStageDuration: h.stages[h.stageIndex] ? h.stages[h.stageIndex].duration : h.stages[h.stages.length-1].duration,
+        currentStageName: h.stages[h.stageIndex] ? h.stages[h.stageIndex].name : (h.completed ? 'DONE' : '—')
+      })),
+      availableTargets: this.availableTargets,
+      availableUpgrades: Object.values(this.upgrades).map(u => ({
+        id: u.id,
+        name: u.name,
+        level: u.level,
+        cost: this.getUpgradeCost(u),
+        description: this.getUpgradeDescription(u.id)
+      })),
       networkStatus: {
         connections: this.connections || 0,
-        bandwidth: 100, // Example value
-        encryption: 'AES-256', // Example value
+        bandwidth: 100,
+        encryption: `AES-256 L${this.upgrades.encryption.level}`,
         detectionRisk: this.detectionRisk || 0
       },
       isPaused: this.isPaused,
@@ -23,38 +39,30 @@ export class Game {
       successfulHacks: this.successfulHacks || 0,
       failedHacks: this.failedHacks || 0,
       detectionRate: this.detectionRisk || 0,
-      maxReputation: this.maxReputation || this.reputation
-    };
-  }
-  // Provide a state snapshot for the UI
-  getState = () => {
-    return {
-      btc: this.btc,
-      reputation: this.reputation,
-      uptimeFormatted: `${Math.floor(this.uptime / 60)}m ${Math.floor(this.uptime % 60)}s`,
-      cpuUsage: this.cpuUsage || 0,
-      riskLevel: this.detectionRisk || 0,
-      activeHacks: this.activeHacks || [],
-      availableTargets: this.availableTargets || [],
-      availableUpgrades: [], // Add upgrade logic if needed
-      networkStatus: {
-        connections: this.connections || 0,
-        bandwidth: 100, // Example value
-        encryption: 'AES-256', // Example value
-        detectionRisk: this.detectionRisk || 0
+      maxReputation: this.maxReputation || this.reputation,
+      research: {
+        points: this.research.points,
+        available: this.research.available.map(r => ({ id:r.id, name:r.name, cost:r.cost, level:r.level })),
+        active: this.research.activeProjects
       },
-      isPaused: this.isPaused,
-      isActive: this.isGameStarted && !this.isPaused && !this.isGameOver,
-      isGameOver: this.isGameOver,
-      totalBtc: this.totalBtcEarned || this.btc,
-      successfulHacks: this.successfulHacks || 0,
-      failedHacks: this.failedHacks || 0,
-      detectionRate: this.detectionRisk || 0,
-      maxReputation: this.maxReputation || this.reputation
+      activityFeed: this.activityFeed ? this.activityFeed.slice(-20) : [],
+      maxConcurrentHacks: this.getMaxConcurrentHacks ? this.getMaxConcurrentHacks() : this.cpuPower
     };
   }
+  // Add missing capacity helper as arrow function (consistent binding)
+  getMaxConcurrentHacks = () => this.cpuPower;
   constructor() {
     this.initializeGame();
+    this.recentEvents = [];
+    this.activityFeed = [];
+    this.riskNotified60 = false;
+    this.riskNotified80 = false;
+    this.lastRiskTraceCheck = 0; // seconds accumulator for trace rolls
+    this.traceEventActive = false;
+    this.traceEventTimer = 0;
+    this.traceEventAnswer = null;
+    this.graceActive = false;
+    this.graceTimer = 0;
   }
 
   initializeGame = () => {
@@ -65,7 +73,13 @@ export class Game {
     this.isGameStarted = false;
     this.isGameOver = false;
     this.uptime = 0;
-    
+    // Upgrades
+    this.upgrades = {
+      bruteforce: { id: 'bruteforce', name: 'Bruteforce', level: 1, baseCost: 0.01 },
+      encryption: { id: 'encryption', name: 'Encryption Suite', level: 1, baseCost: 0.02 },
+      mining: { id: 'mining', name: 'Mining Rig', level: 1, baseCost: 0.015 },
+      cpu: { id: 'cpu', name: 'CPU Core', level: 1, baseCost: 0.05 }
+    };
     // Network state
     this.activeHacks = [];
     this.availableTargets = [];
@@ -116,6 +130,32 @@ export class Game {
     this.timeScale = 1;
     this.staffCost = 2000; // Monthly cost per staff member
 
+    // Research system
+    this.research = {
+      points: 0,
+      passiveRate: 0.01, // pts per second
+      activeProjects: [],
+      available: [
+        { id: 'res-speed', name: 'Optimized Algorithms', cost: 10, effect: { bruteSpeed: 0.1 }, level: 0 },
+        { id: 'res-risk', name: 'Stealth Protocols', cost: 15, effect: { riskMitigation: 0.05 }, level: 0 },
+        { id: 'res-mining', name: 'Quantum Mining', cost: 20, effect: { miningBoost: 0.25 }, level: 0 },
+        { id: 'res-cpu', name: 'Parallel Processing', cost: 25, effect: { cpuCore: 1 }, level: 0 }
+      ]
+    };
+
+    // Prestige and achievements
+    this.prestigeLevel = 0;
+    this.prestigePoints = 0;
+    this.achievements = {
+      definitions: [
+        { id:'btc-1', name:'First Milli', condition: g=>g.totalBtcEarned>=0.001, bonus: g=>{g.reputation+=1;} },
+        { id:'btc-01', name:'Stack Builder', condition: g=>g.totalBtcEarned>=0.01, bonus: g=>{g.research.passiveRate+=0.002;} },
+        { id:'hack-10', name:'Script Kiddie', condition: g=>g.successfulHacks>=10, bonus: g=>{g.software.bruteforce.power+=0.1;} },
+        { id:'hack-100', name:'Operator', condition: g=>g.successfulHacks>=100, bonus: g=>{g.cpuPower+=1;} },
+        { id:'risk-0', name:'Ghost', condition: g=>g.detectionRisk<5 && g.uptime>300, bonus: g=>{g.upgrades.encryption.level+=1;} }
+      ],
+      unlocked: new Set()
+    };
     // Start the game loop
     this.startGameLoop();
   }
@@ -124,68 +164,96 @@ export class Game {
     this.isGameStarted = true;
     this.isPaused = false;
     this.lastUpdate = Date.now();
+    if (this.availableTargets.length === 0) {
+      this.generateNewTargets();
+    }
     return 'Game started!';
   }
 
   checkGameOver = () => {
-    if (this.detectionRisk >= 100 && !this.isGameOver) {
-      this.isGameOver = true;
-      this.isPaused = true;
-      return true;
-    }
+    // Soft overflow model: do not instantly end at 100, handled in evaluateRisk()
+    if (this.isGameOver) return true;
     return false;
   }
 
-  startHack = (target) => {
-    if (this.activeHacks.length >= this.cpuPower) {
-      return 'ERROR: Insufficient CPU resources';
+  startHack = (targetId) => {
+    if (this.activeHacks.length >= this.getMaxConcurrentHacks()) {
+      return `ERROR: CPU capacity reached (${this.activeHacks.length}/${this.getMaxConcurrentHacks()}). Upgrade CPU or wait.`;
     }
-
-    const hack = {
-      target: target,
-      progress: 0,
-      difficulty: this.calculateDifficulty(target),
-      reward: this.calculateReward(target),
-      detectionRisk: Math.random() * 20
-    };
-
-    this.activeHacks.push(hack);
+    const target = this.availableTargets.find(t => t.id === targetId);
+    if (!target) return 'ERROR: Invalid target';
+    this.activeHacks.push({
+      id: target.id,
+      name: target.name,
+      reward: target.reward,
+      difficulty: target.difficulty,
+      stages: target.stages,
+      stageIndex: 0,
+      stageElapsed: 0,
+      completed:false,
+      failed:false
+    });
+    this.availableTargets = this.availableTargets.filter(t => t.id !== targetId);
+    this.generateNewTargets();
     this.updateCPUUsage();
-    return `Initiating hack on ${target}...`;
+    this.addEvent(`[START] ${target.name}`);
+    return `> Hack initiated on ${target.name}`;
   }
 
   updateHacks = (deltaTime) => {
-    this.activeHacks = this.activeHacks.filter(hack => {
-      hack.progress += (this.software.bruteforce.power * deltaTime) / hack.difficulty;
-      
-      if (hack.progress >= 1) {
-        this.completeHack(hack);
-        return false;
+    this.activeHacks.forEach(hack => {
+      if (hack.completed || hack.failed) return;
+      const currentStage = hack.stages[hack.stageIndex];
+      hack.stageElapsed += deltaTime * (this.software.bruteforce.power + (this.upgrades.bruteforce.level - 1) * 0.25);
+      // Random failure chance small per tick based on risk
+      if (Math.random() < (this.detectionRisk / 100000)) {
+        hack.failed = true;
+        this.failedHacks += 1;
+        this.detectionRisk = Math.min(100, this.detectionRisk + 3);
+        this.addEvent(`[FAIL] ${hack.name} (${currentStage.name})`);
       }
-      
-      // Increase detection risk
-      this.detectionRisk += (hack.detectionRisk * deltaTime) / 100;
-      return true;
+      if (!hack.failed && hack.stageElapsed >= currentStage.duration) {
+        hack.stageIndex++;
+        hack.stageElapsed = 0;
+        if (hack.stageIndex >= hack.stages.length) {
+          hack.completed = true;
+          const reward = hack.reward;
+          this.btc += reward;
+          this.totalBtcEarned += reward;
+          this.reputation += Math.floor(hack.difficulty * 5);
+          this.successfulHacks += 1;
+          this.detectionRisk = Math.max(0, this.detectionRisk - 5);
+          this.addEvent(`[COMPLETE] ${hack.name} +${reward.toFixed(4)} BTC`);
+        } else {
+          this.addEvent(`[STAGE] ${hack.name} -> ${hack.stages[hack.stageIndex].name}`);
+        }
+      } else if(!hack.failed) {
+        const encryptionMitigation = 1 - (this.upgrades.encryption.level * 0.05);
+        this.detectionRisk += (hack.difficulty * 0.015 * deltaTime) * encryptionMitigation;
+      }
     });
-
+    // Remove finished/failed hacks immediately to free CPU slots
+    this.activeHacks = this.activeHacks.filter(h => !h.completed && !h.failed);
     this.updateCPUUsage();
   }
 
-  completeHack(hack) {
-    this.btc += hack.reward;
-    this.reputation += Math.floor(hack.difficulty * 10);
-    this.detectionRisk = Math.max(0, this.detectionRisk - 10);
-    return `Hack completed. +${hack.reward.toFixed(4)} BTC`;
+  updateMining = (deltaTime) => {
+    const miningGain = this.getMiningRate() * deltaTime;
+    this.btc += miningGain;
+    this.totalBtcEarned += miningGain;
   }
 
-  updateMining = (deltaTime) => {
-    const miningRate = this.software.mining.power * deltaTime / 3600; // BTC per hour
-    this.btc += miningRate;
-    this.cpuUsage = Math.min(100, this.cpuUsage + (miningRate * 100));
+  getMiningRate() {
+    // Base rate scaled by mining upgrade and research effects
+    const base = 0.00005; // baseline BTC per second
+    const upgradeMult = Math.pow(2, this.upgrades.mining.level - 1); // +100% per level
+    const softwareBoost = this.software.mining.power || 1; // includes research
+    return base * upgradeMult * softwareBoost;
   }
 
   updateCPUUsage() {
-    this.cpuUsage = Math.min(100, (this.activeHacks.length / this.cpuPower) * 100);
+    const running = this.activeHacks.filter(h => !h.completed).length;
+    this.cpuUsage = Math.min(100, (running / this.cpuPower) * 100);
   }
 
   processRandomEvents(deltaTime) {
@@ -266,31 +334,28 @@ export class Game {
   }
 
   generateRandomTargets(count) {
+    const difficultyScale = 1 + (this.uptime / 600) + (this.prestigeLevel * 0.1);
     const targetTypes = [
       { type: 'server', rewardRange: [0.001, 0.01], difficultyRange: [1, 3] },
       { type: 'database', rewardRange: [0.01, 0.05], difficultyRange: [2, 4] },
       { type: 'network', rewardRange: [0.05, 0.2], difficultyRange: [3, 5] },
       { type: 'crypto', rewardRange: [0.2, 1.0], difficultyRange: [4, 6] }
     ];
-
     return Array.from({ length: count }, () => {
-      const target = targetTypes[Math.floor(Math.random() * targetTypes.length)];
-      const difficulty = Math.floor(
-        Math.random() * (target.difficultyRange[1] - target.difficultyRange[0] + 1) +
-        target.difficultyRange[0]
-      );
-      const reward = 
-        target.rewardRange[0] +
-        Math.random() * (target.rewardRange[1] - target.rewardRange[0]);
-
+      const base = targetTypes[Math.floor(Math.random() * targetTypes.length)];
+      const difficulty = Math.floor((Math.random() * (base.difficultyRange[1] - base.difficultyRange[0] + 1) + base.difficultyRange[0]) * difficultyScale);
+      const reward = base.rewardRange[0] + Math.random() * (base.rewardRange[1] - base.rewardRange[0]);
+      const baseTime = difficulty * 6 + Math.random() * difficulty * 4;
       return {
-        id: Math.random().toString(36).substr(2, 9),
-        name: this.generateTargetName(target.type),
-        type: target.type,
+        id: Math.random().toString(36).slice(2, 11),
+        name: this.generateTargetName(base.type),
         difficulty,
         reward,
-        progress: 0,
-        timeToHack: difficulty * 10
+        stages: [
+          { name: 'SCAN', duration: baseTime * 0.25 },
+          { name: 'BREACH', duration: baseTime * 0.45 },
+            { name: 'EXFIL', duration: baseTime * 0.30 }
+        ]
       };
     });
   }
@@ -316,18 +381,26 @@ export class Game {
       this.lastUpdate = Date.now();
       return;
     }
-
     const now = Date.now();
-    const deltaTime = (now - this.lastUpdate) / 1000; // Convert to seconds
+    const deltaTime = (now - this.lastUpdate) / 1000;
     this.lastUpdate = now;
-
-    // Update uptime
     this.uptime += deltaTime;
-    
-    // Update game systems
+
+    // Research passive accumulation
+    this.research.points += this.research.passiveRate * deltaTime;
+
+    // Passive risk decay pre-evaluation
+    const decay = (0.01 + this.upgrades.encryption.level * 0.005) * deltaTime;
+    this.detectionRisk = Math.max(0, this.detectionRisk - decay);
+
     this.updateHacks(deltaTime);
     this.updateMining(deltaTime);
     this.processRandomEvents(deltaTime);
+
+    // Evaluate risk thresholds & overflow trace logic
+    this.evaluateRisk(deltaTime);
+
+    this.checkAchievements();
     this.checkGameOver();
 
     // Check for new day (86400 seconds = 1 day)
@@ -384,6 +457,8 @@ export class Game {
         return `Gained ${newFollowers} new followers!`;
       }
     }
+
+    this.tickPostSystems(deltaTime);
   }
 
   onNewDay = () => {
@@ -421,10 +496,10 @@ export class Game {
   }
 
   generateNewTargets = () => {
-    // Remove some old targets and add new ones
-    this.availableTargets = this.availableTargets
-      .filter(target => Math.random() > 0.2) // 20% chance to remove old targets
-      .concat(this.generateRandomTargets(2)); // Add 2 new targets
+    const count = 3 - this.availableTargets.length;
+    if (count > 0) {
+      this.availableTargets = this.availableTargets.concat(this.generateRandomTargets(count));
+    }
   }
 
   updateSecurityMeasures = () => {
@@ -576,5 +651,245 @@ export class Game {
       return true;
     }
     return false;
+  }
+
+  // Upgrade helpers
+  getUpgradeCost(u) { return +(u.baseCost * Math.pow(1.8, u.level - 1)).toFixed(5); }
+  getUpgradeDescription(id) {
+    switch(id) {
+      case 'bruteforce': return 'Speed +25% per level';
+      case 'encryption': return 'Risk gain -5% per level';
+      case 'mining': return 'Mining +100% per level';
+      case 'cpu': return 'Adds +1 concurrent hack';
+      default: return '';
+    }
+  }
+  canAffordUpgrade(id) {
+    const u = this.upgrades[id];
+    if (!u) return false;
+    return this.btc >= this.getUpgradeCost(u);
+  }
+  purchaseUpgrade(id) {
+    const u = this.upgrades[id];
+    if (!u) return { success: false, message: 'Invalid upgrade' };
+    const cost = this.getUpgradeCost(u);
+    if (this.btc < cost) {
+      this.addEvent(`[UPGRADE FAIL] ${u?.name||id} (insufficient BTC)`);
+      return { success: false, message: 'Insufficient BTC' };
+    }
+    this.btc -= cost;
+    u.level++;
+    if (id === 'cpu') this.cpuPower++;
+    if (id === 'mining') this.software.mining.power += 1;
+    if (id === 'bruteforce') this.software.bruteforce.power += 0.25;
+    this.addEvent(`[UPGRADE] ${u.name} L${u.level}`);
+    return { success: true, message: `[UPGRADE] ${u.name} L${u.level}` };
+  }
+  purchaseResearch(id) {
+    const r = this.research.available.find(p => p.id === id);
+    if (!r) return { success:false, message:'Invalid research' };
+    if (this.research.points < r.cost) {
+      this.addEvent(`[RESEARCH FAIL] ${r?.name||id} need ${r.cost} RP`);
+      return { success:false, message:'Insufficient research points' };
+    }
+    this.research.points -= r.cost;
+    r.level++;
+    if (r.effect.bruteSpeed) this.software.bruteforce.power += r.effect.bruteSpeed;
+    if (r.effect.riskMitigation) this.research.passiveRate += 0.002;
+    if (r.effect.miningBoost) this.software.mining.power += r.effect.miningBoost;
+    if (r.effect.cpuCore) this.cpuPower += r.effect.cpuCore;
+    r.cost = Math.ceil(r.cost * 1.75);
+    this.addEvent(`[RESEARCH] ${r.name} L${r.level}`);
+    return { success:true, message:`Research upgraded: ${r.name}` };
+  }
+  checkAchievements() {
+    this.achievements.definitions.forEach(a => {
+      if (!this.achievements.unlocked.has(a.id) && a.condition(this)) {
+        this.achievements.unlocked.add(a.id);
+        a.bonus(this);
+        this.addEvent(`[ACHIEVEMENT] ${a.name}`);
+      }
+    });
+  }
+  addEvent(msg) {
+    this.recentEvents.push(msg);
+    this.activityFeed.push({ msg, t: Date.now() });
+    if (this.activityFeed.length > 100) this.activityFeed.splice(0, this.activityFeed.length-100);
+  }
+
+  evaluateRisk(deltaTime) {
+    const r = this.detectionRisk;
+    if (r >= 60 && !this.riskNotified60) { this.addEvent('[RISK] Elevated network scrutiny detected.'); this.riskNotified60 = true; }
+    if (r >= 80 && !this.riskNotified80) { this.addEvent('[RISK] CRITICAL: Active tracing suspected!'); this.riskNotified80 = true; }
+
+    if (r < 60) { this.riskNotified60 = false; }
+    if (r < 80) { this.riskNotified80 = false; }
+
+    if (r >= 100 && !this.isGameOver) {
+      this.lastRiskTraceCheck += deltaTime;
+      if (this.lastRiskTraceCheck >= 1) {
+        this.lastRiskTraceCheck = 0;
+        const overflow = r - 100;
+        const base = 0.05;
+        const perOverflow = 0.005;
+        const mitigation = this.upgrades.encryption.level * 0.03;
+        const mitigationFactor = mitigation * 0.5;
+        let chance = base + overflow * perOverflow - mitigationFactor;
+        chance = Math.min(0.85, Math.max(0.02, chance));
+        if (Math.random() < chance) {
+          // Instead of immediate game over, launch mini-event if not already in one or grace
+          if (!this.traceEventActive && !this.graceActive) {
+            this.launchTraceEvent();
+          } else if(this.graceActive) {
+            // Grace already used; now it is final
+            this.triggerGameOver();
+          }
+        } else {
+          this.addEvent(`[TRACE] Sweep evaded (risk ${r.toFixed(1)} / overflow ${overflow}).`);
+        }
+      }
+    } else {
+      this.lastRiskTraceCheck = 0; // reset when under 100
+    }
+  }
+  launchTraceEvent() {
+    this.traceEventActive = true;
+    this.traceEventTimer = 25; // extended to 25 seconds to choose
+    const options = ['PURGE LOGS','ROTATE KEYS','FLOOD NOISE'];
+    this.traceEventAnswer = options[Math.floor(Math.random()*options.length)];
+    this.addEvent('[TRACE] Active trace detected! Execute countermeasure!');
+  }
+  resolveTraceOption(choice) {
+    if (!this.traceEventActive) return { resolved:false };
+    const success = choice === this.traceEventAnswer;
+    if (success) {
+      this.addEvent('[TRACE] Countermeasure successful. Entering GRACE window.');
+      this.activateGraceWindow();
+    } else {
+      this.addEvent('[TRACE] Countermeasure failed. Trace tightening.');
+      this.triggerGameOver();
+    }
+    this.traceEventActive = false;
+    return { resolved:true, success };
+  }
+  activateGraceWindow() {
+    this.graceActive = true;
+    this.graceTimer = 10; // seconds
+    // Mitigate immediate risk spike
+    this.detectionRisk = Math.min(this.detectionRisk, 85);
+  }
+  update(deltaTime) {
+    if (!this.isGameStarted || this.isPaused || this.isGameOver) {
+      this.lastUpdate = Date.now();
+      return;
+    }
+    const now = Date.now();
+    const realDeltaTime = (now - this.lastUpdate) / 1000;
+    this.lastUpdate = now;
+    this.uptime += realDeltaTime;
+
+    // Research passive accumulation
+    this.research.points += this.research.passiveRate * realDeltaTime;
+
+    // Passive risk decay pre-evaluation
+    const decay = (0.01 + this.upgrades.encryption.level * 0.005) * realDeltaTime;
+    this.detectionRisk = Math.max(0, this.detectionRisk - decay);
+
+    this.updateHacks(realDeltaTime);
+    this.updateMining(realDeltaTime);
+    this.processRandomEvents(realDeltaTime);
+
+    // Evaluate risk thresholds & overflow trace logic
+    this.evaluateRisk(realDeltaTime);
+
+    this.checkAchievements();
+    this.checkGameOver();
+
+    // Check for new day (86400 seconds = 1 day)
+    const newDay = Math.floor((this.uptime) / 86400);
+    const oldDay = Math.floor((this.uptime - realDeltaTime) / 86400);
+
+    // Check if a new day has started
+    if (newDay > oldDay) {
+      this.onNewDay();
+    }
+
+    if (this.isRunning && this.project) {
+      // Update development time
+      this.devTime += realDeltaTime;
+      
+      // Update project progress based on staff and time
+      const baseProgressRate = 0.01 * (1 + this.staff * 0.5);
+      const phaseMultiplier = this.getPhaseMultiplier();
+      const progressRate = baseProgressRate * phaseMultiplier;
+      
+      this.project.progress = Math.min(1, this.project.progress + progressRate * realDeltaTime);
+      
+      // Update task progress
+      this.updateTaskProgress(realDeltaTime);
+      
+      // Generate random bugs based on staff and progress rate
+      if (Math.random() < (0.05 + this.staff * 0.01) * realDeltaTime) {
+        const newBugs = Math.floor(Math.random() * this.staff) + 1;
+        this.bugs += newBugs;
+        return `Found ${newBugs} new bug${newBugs > 1 ? 's' : ''}!`;
+      }
+      
+      // Update dev phase based on progress
+      const phaseChanged = this.updateDevPhase();
+      if (phaseChanged) {
+        return `Development phase changed to: ${this.devPhase}`;
+      }
+      
+      // Complete project if done
+      if (this.project.progress >= 1) {
+        return this.completeProject();
+      }
+    }
+
+    // Update followers based on reputation (daily chance)
+    const currentDay = Math.floor(this.uptime / 86400); // Convert seconds to days
+    const previousDay = Math.floor((this.uptime - realDeltaTime) / 86400);
+
+    if (currentDay > previousDay) {
+      // Handle daily updates
+      if (Math.random() < 0.3 + (this.reputation * 0.01)) {
+        const newFollowers = Math.floor((Math.random() * this.reputation) + 1);
+        this.followers += newFollowers;
+        return `Gained ${newFollowers} new followers!`;
+      }
+    }
+
+    this.tickPostSystems(realDeltaTime);
+  }
+
+  tickPostSystems(deltaTime) {
+    if (this.traceEventActive) {
+      this.traceEventTimer -= deltaTime;
+      if (this.traceEventTimer <= 0) {
+        // Auto fail if no choice
+        this.addEvent('[TRACE] No response. Trace lock achieved.');
+        this.traceEventActive = false;
+        this.triggerGameOver();
+      }
+    }
+    if (this.graceActive) {
+      this.graceTimer -= deltaTime;
+      if (this.graceTimer <= 0) {
+        if (this.detectionRisk >= 80) {
+          this.addEvent('[GRACE] Risk still critical after grace window.');
+          this.triggerGameOver();
+        } else {
+          this.addEvent('[GRACE] Trace window cleared. Resuming operations.');
+        }
+        this.graceActive = false;
+      }
+    }
+  }
+  triggerGameOver() {
+    if (this.isGameOver) return;
+    this.isGameOver = true;
+    this.isPaused = true;
+    this.addEvent('[SYSTEM] SESSION TERMINATED. You were traced.');
   }
 }
