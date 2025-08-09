@@ -57,6 +57,7 @@ export class Game {
     this.activityFeed = [];
     this.riskNotified60 = false;
     this.riskNotified80 = false;
+    this.riskTipShown80 = false; // tip flag
     this.lastRiskTraceCheck = 0; // seconds accumulator for trace rolls
     this.traceEventActive = false;
     this.traceEventTimer = 0;
@@ -133,7 +134,7 @@ export class Game {
     // Research system
     this.research = {
       points: 0,
-      passiveRate: 0.01, // pts per second
+      passiveRate: 0.015, // base passive RP per second (buffed from 0.01)
       activeProjects: [],
       available: [
         { id: 'res-speed', name: 'Optimized Algorithms', cost: 10, effect: { bruteSpeed: 0.1 }, level: 0 },
@@ -182,6 +183,12 @@ export class Game {
     }
     const target = this.availableTargets.find(t => t.id === targetId);
     if (!target) return 'ERROR: Invalid target';
+    if (typeof target.cost === 'number' && this.btc < target.cost) {
+      return `ERROR: Need ${target.cost.toFixed(5)} BTC to initiate.`;
+    }
+    if (typeof target.cost === 'number') {
+      this.btc -= target.cost;
+    }
     this.activeHacks.push({
       id: target.id,
       name: target.name,
@@ -196,7 +203,7 @@ export class Game {
     this.availableTargets = this.availableTargets.filter(t => t.id !== targetId);
     this.generateNewTargets();
     this.updateCPUUsage();
-    this.addEvent(`[START] ${target.name}`);
+    this.addEvent(`[START] ${target.name}${target.cost?` (-${target.cost.toFixed(5)} BTC)`:''}`);
     return `> Hack initiated on ${target.name}`;
   }
 
@@ -223,7 +230,10 @@ export class Game {
           this.reputation += Math.floor(hack.difficulty * 5);
           this.successfulHacks += 1;
           this.detectionRisk = Math.max(0, this.detectionRisk - 5);
-          this.addEvent(`[COMPLETE] ${hack.name} +${reward.toFixed(4)} BTC`);
+          // Research point reward from successful hack (difficulty scaled)
+          const rpGain = +(hack.difficulty * 0.15).toFixed(2);
+          this.research.points += rpGain;
+          this.addEvent(`[COMPLETE] ${hack.name} +${reward.toFixed(4)} BTC [RP +${rpGain}]`);
         } else {
           this.addEvent(`[STAGE] ${hack.name} -> ${hack.stages[hack.stageIndex].name}`);
         }
@@ -346,15 +356,20 @@ export class Game {
       const difficulty = Math.floor((Math.random() * (base.difficultyRange[1] - base.difficultyRange[0] + 1) + base.difficultyRange[0]) * difficultyScale);
       const reward = base.rewardRange[0] + Math.random() * (base.rewardRange[1] - base.rewardRange[0]);
       const baseTime = difficulty * 6 + Math.random() * difficulty * 4;
+      // Introduce upfront BTC cost (scaled by reward & difficulty but capped)
+      let cost = reward * (0.25 + difficulty * 0.015); // scale
+      cost = Math.min(cost, reward * 0.6); // never exceed 60% of reward
+      cost = +cost.toFixed(5);
       return {
         id: Math.random().toString(36).slice(2, 11),
         name: this.generateTargetName(base.type),
         difficulty,
         reward,
+        cost,
         stages: [
           { name: 'SCAN', duration: baseTime * 0.25 },
           { name: 'BREACH', duration: baseTime * 0.45 },
-            { name: 'EXFIL', duration: baseTime * 0.30 }
+          { name: 'EXFIL', duration: baseTime * 0.30 }
         ]
       };
     });
@@ -384,10 +399,13 @@ export class Game {
     const now = Date.now();
     const deltaTime = (now - this.lastUpdate) / 1000;
     this.lastUpdate = now;
+    if (!isFinite(deltaTime) || deltaTime <= 0) return;
     this.uptime += deltaTime;
 
-    // Research passive accumulation
-    this.research.points += this.research.passiveRate * deltaTime;
+    // Research passive accumulation (enhanced)
+    const encryptionBonus = (this.upgrades.encryption.level - 1) * 0.002;
+    const effectivePassive = Math.min(0.06, this.research.passiveRate + encryptionBonus);
+    this.research.points += effectivePassive * deltaTime;
 
     // Passive risk decay pre-evaluation
     const decay = (0.01 + this.upgrades.encryption.level * 0.005) * deltaTime;
@@ -403,58 +421,34 @@ export class Game {
     this.checkAchievements();
     this.checkGameOver();
 
-    // Check for new day (86400 seconds = 1 day)
+    // Day rollover
     const newDay = Math.floor((this.uptime) / 86400);
     const oldDay = Math.floor((this.uptime - deltaTime) / 86400);
+    if (newDay > oldDay) { this.onNewDay(); }
 
-    // Check if a new day has started
-    if (newDay > oldDay) {
-      this.onNewDay();
-    }
-
+    // Project update
     if (this.isRunning && this.project) {
-      // Update development time
       this.devTime += deltaTime;
-      
-      // Update project progress based on staff and time
       const baseProgressRate = 0.01 * (1 + this.staff * 0.5);
       const phaseMultiplier = this.getPhaseMultiplier();
       const progressRate = baseProgressRate * phaseMultiplier;
-      
       this.project.progress = Math.min(1, this.project.progress + progressRate * deltaTime);
-      
-      // Update task progress
       this.updateTaskProgress(deltaTime);
-      
-      // Generate random bugs based on staff and progress rate
       if (Math.random() < (0.05 + this.staff * 0.01) * deltaTime) {
         const newBugs = Math.floor(Math.random() * this.staff) + 1;
         this.bugs += newBugs;
-        return `Found ${newBugs} new bug${newBugs > 1 ? 's' : ''}!`;
       }
-      
-      // Update dev phase based on progress
-      const phaseChanged = this.updateDevPhase();
-      if (phaseChanged) {
-        return `Development phase changed to: ${this.devPhase}`;
-      }
-      
-      // Complete project if done
-      if (this.project.progress >= 1) {
-        return this.completeProject();
-      }
+      this.updateDevPhase();
+      if (this.project.progress >= 1) { this.completeProject(); }
     }
 
-    // Update followers based on reputation (daily chance)
-    const currentDay = Math.floor(this.uptime / 86400); // Convert seconds to days
+    // Followers daily chance
+    const currentDay = Math.floor(this.uptime / 86400);
     const previousDay = Math.floor((this.uptime - deltaTime) / 86400);
-
     if (currentDay > previousDay) {
-      // Handle daily updates
       if (Math.random() < 0.3 + (this.reputation * 0.01)) {
         const newFollowers = Math.floor((Math.random() * this.reputation) + 1);
         this.followers += newFollowers;
-        return `Gained ${newFollowers} new followers!`;
       }
     }
 
@@ -721,9 +715,14 @@ export class Game {
     const r = this.detectionRisk;
     if (r >= 60 && !this.riskNotified60) { this.addEvent('[RISK] Elevated network scrutiny detected.'); this.riskNotified60 = true; }
     if (r >= 80 && !this.riskNotified80) { this.addEvent('[RISK] CRITICAL: Active tracing suspected!'); this.riskNotified80 = true; }
+    if (r >= 80 && !this.riskTipShown80) {
+      this.riskTipShown80 = true;
+      this.addEvent('[TIP] Reduce risk: Finish current hacks (completion drops risk), pause starting new ones, upgrade Encryption, invest in Stealth research, or wait.');
+    }
 
     if (r < 60) { this.riskNotified60 = false; }
     if (r < 80) { this.riskNotified80 = false; }
+    if (r < 70) { this.riskTipShown80 = false; }
 
     if (r >= 100 && !this.isGameOver) {
       this.lastRiskTraceCheck += deltaTime;
@@ -778,91 +777,6 @@ export class Game {
     // Mitigate immediate risk spike
     this.detectionRisk = Math.min(this.detectionRisk, 85);
   }
-  update(deltaTime) {
-    if (!this.isGameStarted || this.isPaused || this.isGameOver) {
-      this.lastUpdate = Date.now();
-      return;
-    }
-    const now = Date.now();
-    const realDeltaTime = (now - this.lastUpdate) / 1000;
-    this.lastUpdate = now;
-    this.uptime += realDeltaTime;
-
-    // Research passive accumulation
-    this.research.points += this.research.passiveRate * realDeltaTime;
-
-    // Passive risk decay pre-evaluation
-    const decay = (0.01 + this.upgrades.encryption.level * 0.005) * realDeltaTime;
-    this.detectionRisk = Math.max(0, this.detectionRisk - decay);
-
-    this.updateHacks(realDeltaTime);
-    this.updateMining(realDeltaTime);
-    this.processRandomEvents(realDeltaTime);
-
-    // Evaluate risk thresholds & overflow trace logic
-    this.evaluateRisk(realDeltaTime);
-
-    this.checkAchievements();
-    this.checkGameOver();
-
-    // Check for new day (86400 seconds = 1 day)
-    const newDay = Math.floor((this.uptime) / 86400);
-    const oldDay = Math.floor((this.uptime - realDeltaTime) / 86400);
-
-    // Check if a new day has started
-    if (newDay > oldDay) {
-      this.onNewDay();
-    }
-
-    if (this.isRunning && this.project) {
-      // Update development time
-      this.devTime += realDeltaTime;
-      
-      // Update project progress based on staff and time
-      const baseProgressRate = 0.01 * (1 + this.staff * 0.5);
-      const phaseMultiplier = this.getPhaseMultiplier();
-      const progressRate = baseProgressRate * phaseMultiplier;
-      
-      this.project.progress = Math.min(1, this.project.progress + progressRate * realDeltaTime);
-      
-      // Update task progress
-      this.updateTaskProgress(realDeltaTime);
-      
-      // Generate random bugs based on staff and progress rate
-      if (Math.random() < (0.05 + this.staff * 0.01) * realDeltaTime) {
-        const newBugs = Math.floor(Math.random() * this.staff) + 1;
-        this.bugs += newBugs;
-        return `Found ${newBugs} new bug${newBugs > 1 ? 's' : ''}!`;
-      }
-      
-      // Update dev phase based on progress
-      const phaseChanged = this.updateDevPhase();
-      if (phaseChanged) {
-        return `Development phase changed to: ${this.devPhase}`;
-      }
-      
-      // Complete project if done
-      if (this.project.progress >= 1) {
-        return this.completeProject();
-      }
-    }
-
-    // Update followers based on reputation (daily chance)
-    const currentDay = Math.floor(this.uptime / 86400); // Convert seconds to days
-    const previousDay = Math.floor((this.uptime - realDeltaTime) / 86400);
-
-    if (currentDay > previousDay) {
-      // Handle daily updates
-      if (Math.random() < 0.3 + (this.reputation * 0.01)) {
-        const newFollowers = Math.floor((Math.random() * this.reputation) + 1);
-        this.followers += newFollowers;
-        return `Gained ${newFollowers} new followers!`;
-      }
-    }
-
-    this.tickPostSystems(realDeltaTime);
-  }
-
   tickPostSystems(deltaTime) {
     if (this.traceEventActive) {
       this.traceEventTimer -= deltaTime;

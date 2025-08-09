@@ -40,10 +40,19 @@
         <div class="game-over-header">
           <span class="blink">>_</span> CONNECTION TERMINATED
         </div>
-        <p>System security traced your location!</p>
-        <p>Operation Stats:</p>
+        <pre id="game-over-ascii" class="ascii-art centered" style="margin-top:0;">
+  _____________________________
+ |  |  |  |  |  |  |  |  |  |  |
+ |  |  |  |  |  |  |  |  |  |  |
+ |  |  |  |  |  |  |  |  |  |  |
+ |  |  |  |  |  |  |  |  |  |  |
+ |__|__|__|__|__|__|__|__|__|__|
+  ||  DIGITAL CONFINEMENT  ||
+  ||    ACCESS REVOKED      ||
+        </pre>
+        <p class="centered"><strong>SESSION TERMINATED. You were traced.</strong></p>
         <div id="final-stats" class="stats-terminal"></div>
-        <button id="restart-game-btn" class="crt-button">> REINITIALIZE SYSTEM</button>
+        <button id="restart-game-btn" class="crt-button center-btn">> START NEW SESSION</button>
       </div>
     </div>
 
@@ -92,6 +101,7 @@
           <button class="panel-btn" data-panel="software">Software</button>
           <button class="panel-btn" data-panel="staff">Research</button>
           <button class="panel-btn" data-panel="progress">Analytics</button>
+          <button class="panel-btn" data-panel="help">Help</button>
           <div class="sidebar-spacer"></div>
           <button id="pause-btn" class="panel-btn pause-button" title="Pause/Resume Game">
             <span class="button-text">[PAUSE]</span>
@@ -185,6 +195,30 @@
                     <h3 class="task-header">Recent Activity</h3>
                     <div id="activity-list" class="task-grid"></div>
                   </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- HELP / TUTORIAL PANEL -->
+            <section id="panel-help" class="panel">
+              <div class="panel-content">
+                <div class="terminal-header">&gt; OPERATIONS MANUAL</div>
+                <div class="help-scroll">
+                  <p><strong>Goal:</strong> Accumulate BTC while keeping detection risk under control. High risk triggers trace events that can end the session.</p>
+                  <ul>
+                    <li><strong>Hacking:</strong> Select targets in Hack panel. Each hack has 3 stages (SCAN / BREACH / EXFIL). Reward = BTC, lowers risk slightly on completion; failures add risk.</li>
+                    <li><strong>CPU Slots:</strong> Limits concurrent hacks. Upgrade CPU (Software panel) or research Parallel Processing to increase capacity.</li>
+                    <li><strong>Risk:</strong> Rises with active hacks & failures. At 60% and 80% you get warnings. 100%+ triggers periodic TRACE checks.</li>
+                    <li><strong>Trace Event:</strong> If a TRACE launches you must pick the correct countermeasure (PURGE LOGS / ROTATE KEYS / FLOOD NOISE) before timer expires. Success grants a GRACE window; failure = termination.</li>
+                    <li><strong>Grace Window:</strong> Temporarily suppresses immediate game over. Drop risk below 80% before it ends.</li>
+                    <li><strong>Upgrades:</strong> Bruteforce = faster stages, Encryption = less risk gain, Mining = passive BTC, CPU = more concurrent hacks.</li>
+                    <li><strong>Mining:</strong> Generates passive BTC every second; scales strongly with Mining levels + research.</li>
+                    <li><strong>Research:</strong> Earn passive Research Points; spend them for permanent boosts (speed, risk mitigation, mining, CPU cores).</li>
+                    <li><strong>Achievements:</strong> Unlock automatically and grant hidden bonuses (logged in System Log).</li>
+                    <li><strong>Strategy Tips:</strong> Keep some CPU free for new lucrative targets; push risk just below thresholds; invest early in Mining & Encryption; respond instantly to TRACE.</li>
+                  </ul>
+                  <p><em>Quick Start:</em> Open Hack panel & start a low difficulty target. Buy Bruteforce L2, then Mining, then Encryption. Watch risk bar & system log for warnings.</p>
+                  <p>Good luck, operator.</p>
                 </div>
               </div>
             </section>

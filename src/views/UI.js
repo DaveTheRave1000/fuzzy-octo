@@ -34,7 +34,8 @@ export class UI {
         software: document.getElementById('panel-software'),
         darknet: document.getElementById('panel-darknet'),
         staff: document.getElementById('panel-staff'), // research
-        progress: document.getElementById('panel-progress') // analytics
+        progress: document.getElementById('panel-progress'), // analytics
+        help: document.getElementById('panel-help') // new help panel
       },
       resourceStats: document.getElementById('resource-stats'),
     };
@@ -65,6 +66,7 @@ export class UI {
   initializeEventListeners() {
     if (this.elements.startGameBtn) {
       this.elements.startGameBtn.addEventListener('click', () => {
+        this.clearLog();
         this.game.startGame();
         // Hide the start modal
         const startModal = document.getElementById('start-game-modal');
@@ -80,10 +82,12 @@ export class UI {
 
     if (this.elements.restartGameBtn) {
       this.elements.restartGameBtn.addEventListener('click', () => {
-        this.game.restartGame();
-        this.log('[SYSTEM] System reset initiated...', 'system');
-        this.log('[SYSTEM] All connections terminated', 'system');
-        this.log('[SYSTEM] Restarting terminal...', 'system');
+        this.clearLog();
+        this.game.initializeGame();
+        const gom = document.getElementById('game-over-modal');
+        if (gom) { gom.classList.remove('active'); gom.style.display='none'; }
+        const startModal = document.getElementById('start-game-modal');
+        if (startModal) { startModal.classList.add('active'); startModal.style.display='block'; }
       });
     }
 
@@ -184,7 +188,10 @@ export class UI {
         return;
       }
       const result = this.game.purchaseUpgrade(id);
-      this.log(result.message, result.success ? 'success' : 'warning');
+      // Game already adds [UPGRADE] event; avoid duplicate manual log on success
+      if (!result.success) {
+        this.log(result.message, 'warning');
+      }
       // Delay re-render slightly to allow click visual feedback to complete
       setTimeout(()=>{
         this.lastUpgradesSig = '';
@@ -245,10 +252,10 @@ export class UI {
       return;
     }
 
-    // Ensure panels container exists and is properly positioned
+    // Remove previously forced margin that caused horizontal offset
     const panelsContainer = document.querySelector('.panels-container');
     if (panelsContainer) {
-      panelsContainer.style.marginLeft = '80px'; // Leave space for sidebar
+      panelsContainer.style.marginLeft = '0';
     }
 
     // Hide all panels
@@ -315,11 +322,21 @@ export class UI {
     targets.forEach(target => {
       const targetEl = document.createElement('div');
       targetEl.classList.add('target-item');
+      const costStr = typeof target.cost === 'number' ? `${target.cost.toFixed(5)} BTC` : '—';
       targetEl.innerHTML = `
-        <span class="target-name">${target.name}</span>
-        <span class="target-difficulty">Diff: ${target.difficulty}</span>
-        <span class="target-reward">${target.reward.toFixed(4)} BTC</span>
-        <button class="crt-button hack-btn" data-target-id="${target.id}">HACK</button>
+        <div class="target-header">
+          <span class="target-name">${target.name}</span>
+        </div>
+        <div class="target-meta">
+          <span class="meta-label">DIFFICULTY:</span><span class="meta-value diff-val">${target.difficulty}</span>
+          <span class="meta-sep">|</span>
+          <span class="meta-label">REWARD:</span><span class="meta-value reward-val">${target.reward.toFixed(4)} BTC</span>
+          <span class="meta-sep">|</span>
+            <span class="meta-label">COST:</span><span class="meta-value cost-val">${costStr}</span>
+        </div>
+        <div class="target-actions">
+          <button class="crt-button hack-btn" data-target-id="${target.id}" title="Attempt breach of ${target.name}">HACK</button>
+        </div>
       `;
       this.elements.hackTargets.appendChild(targetEl);
     });
@@ -443,6 +460,42 @@ export class UI {
     if (cpuSlotsEl) {
       cpuSlotsEl.textContent = `${this.game.activeHacks.length}/${gameState.maxConcurrentHacks || this.game.cpuPower}`;
     }
+
+    // Show game over modal if triggered
+    if (gameState.isGameOver) {
+      const gom = document.getElementById('game-over-modal');
+      if (gom && !gom.classList.contains('active')) {
+        this.populateGameOverStats(gameState);
+        gom.classList.add('active');
+        gom.style.display = 'block';
+      } else if (gom) {
+        // keep stats refreshed if something changes post-stop (unlikely)
+        this.populateGameOverStats(gameState);
+      }
+    }
+  }
+
+  populateGameOverStats(state) {
+    const statsEl = document.getElementById('final-stats');
+    if (!statsEl) return;
+    const lines = [
+      { label:'Uptime', value: state.uptimeFormatted },
+      { label:'Total BTC', value: state.btc.toFixed(8) },
+      { label:'BTC Earned', value: state.totalBtc.toFixed(8) },
+      { label:'Successful Hacks', value: state.successfulHacks },
+      { label:'Failed Hacks', value: state.failedHacks },
+      { label:'Final Risk', value: Math.round(state.riskLevel) + '%' },
+      { label:'Research Points', value: state.research.points.toFixed(2) },
+      { label:'Bruteforce Lvl', value: this.game.upgrades.bruteforce.level },
+      { label:'Encryption Lvl', value: this.game.upgrades.encryption.level },
+      { label:'Mining Lvl', value: this.game.upgrades.mining.level },
+      { label:'CPU Cores', value: this.game.cpuPower }
+    ];
+    statsEl.innerHTML = `
+      <div class="final-stats-wrapper">
+        <div class="final-stats-header">SESSION SUMMARY</div>
+        <div class="final-stats-grid">${lines.map(l=>`<div class="final-stat"><span class="fs-label">${l.label}</span><span class="fs-value">${l.value}</span></div>`).join('')}</div>
+      </div>`;
   }
 
   flushGameEvents() {
@@ -514,12 +567,21 @@ export class UI {
     const line = document.createElement('div');
     let derivedType = type;
     if (/^\[RISK\]/.test(message)) derivedType = 'risk';
-    if (/^\[TRACE\]/.test(message)) derivedType = 'trace';
+    else if (/^\[TRACE\]/.test(message)) derivedType = 'trace';
+    else if (/^\[FAIL\]/.test(message)) derivedType = 'fail';
+    else if (/^\[ACHIEVEMENT\]/.test(message)) derivedType = 'achievement';
+    else if (/^ERROR:/.test(message)) derivedType = 'error';
     line.className = `log-line ${derivedType}`;
     const ts = new Date().toLocaleTimeString();
     line.textContent = `[${ts}] ${message}`;
     this.elements.log.appendChild(line);
     this.elements.log.scrollTop = this.elements.log.scrollHeight;
+  }
+
+  clearLog() {
+    if (this.elements.log) {
+      this.elements.log.innerHTML = '';
+    }
   }
 
   updateTraceUI() {
